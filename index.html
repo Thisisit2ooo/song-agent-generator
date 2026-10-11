@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Song Agent Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+
+        .btn-generate.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-copy {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #5568d3;
+        }
+
+        .btn-download {
+            background: #764ba2;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #643a7a;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .song-title {
+            font-size: 1.6em;
+            color: #667eea;
+            margin: 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .metadata-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .metadata-value {
+            color: #333;
+            margin-top: 4px;
+            font-size: 1em;
+        }
+
+        .lyrics-section {
+            margin: 25px 0;
+        }
+
+        .lyrics-part {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #764ba2;
+            border-radius: 4px;
+        }
+
+        .lyrics-part-title {
+            font-weight: 700;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .lyrics-part-content {
+            color: #333;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            color: #1565c0;
+            font-size: 0.95em;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            color: #c62828;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+            padding: 15px;
+            border-radius: 4px;
+            color: #2e7d32;
+            margin: 15px 0;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .btn-preset {
+            padding: 10px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-preset:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chords-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .chord {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 AI Song Agent Generator</h1>
+
+    <div class="container">
+        <!-- INPUT PANEL -->
+        <div class="panel">
+            <h2>Create Your Song</h2>
+            
+            <div class="info-box">
+                💡 Fill in the details and click "Generate Song" to create your custom track!
+            </div>
+
+            <div class="form-group">
+                <label for="songTitle">Song Title (Optional)</label>
+                <input type="text" id="songTitle" placeholder="e.g., Summer Dreams">
+            </div>
+
+            <div class="form-group">
+                <label>Quick Presets</label>
+                <div class="preset-buttons">
+                    <button class="btn-preset" onclick="loadPreset('pop')">🎤 Pop Anthem</button>
+                    <button class="btn-preset" onclick="loadPreset('hiphop')">🎤 Hip Hop</button>
+                    <button class="btn-preset" onclick="loadPreset('country')">🎤 Country</button>
+                    <button class="btn-preset" onclick="loadPreset('rnb')">🎤 R&B Soul</button>
+                    <button class="btn-preset" onclick="loadPreset('rock')">🎤 Rock</button>
+                    <button class="btn-preset" onclick="loadPreset('ballad')">🎤 Ballad</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="genre">Genre</label>
+                <select id="genre">
+                    <option>Pop</option>
+                    <option>Hip Hop</option>
+                    <option>Rock</option>
+                    <option>Country</option>
+                    <option>R&B</option>
+                    <option>Jazz</option>
+                    <option>Electronic</option>
+                    <option>Folk</option>
+                    <option>Metal</option>
+                    <option>Reggae</option>
+                    <option>Latin</option>
+                    <option>K-pop</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="style">Style</label>
+                <input type="text" id="style" placeholder="e.g., melodic, energetic, acoustic, synthwave">
+            </div>
+
+            <div class="form-group">
+                <label for="voice">Voice Type</label>
+                <select id="voice">
+                    <option>Female Soulful</option>
+                    <option>Male Deep</option>
+                    <option>Male Raspy</option>
+                    <option>Female Pop</option>
+                    <option>Male Rap</option>
+                    <option>Duet Male/Female</option>
+                    <option>Angelic</option>
+                    <option>Robotic</option>
+                    <option>Aged & Wise</option>
+                    <option>Youthful</option>
+                    <option>Breathy</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tone">Tone</label>
+                <select id="tone">
+                    <option>Uplifting</option>
+                    <option>Melancholic</option>
+                    <option>Aggressive</option>
+                    <option>Romantic</option>
+                    <option>Humorous</option>
+                    <option>Dark</option>
+                    <option>Inspirational</option>
+                    <option>Playful</option>
+                    <option>Reflective</option>
+                    <option>Cinematic</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="mood">Mood</label>
+                <input type="text" id="mood" placeholder="e.g., energetic, calm, nostalgic, party">
+            </div>
+
+            <div class="form-group">
+                <label for="theme">Theme/Lyrics Topic</label>
+                <input type="text" id="theme" placeholder="e.g., love, loss, friendship, adventure, success">
+            </div>
+
+            <div class="form-group">
+                <label for="language">Language</label>
+                <select id="language">
+                    <option>English</option>
+                    <option>Spanish</option>
+                    <option>French</option>
+                    <option>German</option>
+                    <option>Italian</option>
+                    <option>Portuguese</option>
+                    <option>Japanese</option>
+                    <option>Korean</option>
+                    <option>Chinese (Mandarin)</option>
+                    <option>Mixed/Code-switch</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bpm">BPM (Tempo)</label>
+                <input type="number" id="bpm" value="96" min="40" max="200">
+            </div>
+
+            <div class="form-group">
+                <label for="lyrics">Custom Lyrics (Optional)</label>
+                <textarea id="lyrics" placeholder="Add your own lyrics here. Leave blank to auto-generate..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-generate" id="generateBtn" onclick="generateSong()">Generate Song</button>
+                <button style="background: #999;" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="panel">
+            <h2>Generated Song</h2>
+            
+            <div id="loadingState" style="display: none; text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 10px; color: #667eea; font-weight: 600;">Creating your song...</p>
+            </div>
+
+            <div id="resultSection" class="result-section">
+                <div id="songResult"></div>
+                
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="btn-copy" onclick="copySongText()">📋 Copy Lyrics</button>
+                    <button class="btn-download" onclick="downloadSongJSON()">⬇️ Download JSON</button>
+                </div>
+            </div>
+
+            <div id="noResult" style="text-align: center; padding: 40px; color: #999;">
+                <p style="font-size: 3em; margin-bottom: 10px;">🎵</p>
+                <p>Fill in the form and generate a song to see results here!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRESETS = {
+            pop: {
+                genre: "Pop",
+                style: "melodic, upbeat",
+                voice: "Female Pop",
+                tone: "Uplifting",
+                mood: "energetic, happy",
+                theme: "love, confidence, celebration"
+            },
+            hiphop: {
+                genre: "Hip Hop",
+                style: "rhythmic, funky",
+                voice: "Male Rap",
+                tone: "Aggressive",
+                mood: "confident, sharp",
+                theme: "success, hustle, confidence"
+            },
+            country: {
+                genre: "Country",
+                style: "acoustic, storytelling",
+                voice: "Male Deep",
+                tone: "Romantic",
+                mood: "warm, nostalgic",
+                theme: "love, home, rural life"
+            },
+            rnb: {
+                genre: "R&B",
+                style: "smooth, soulful",
+                voice: "Female Soulful",
+                tone: "Romantic",
+                mood: "smooth, sultry",
+                theme: "love, passion, relationships"
+            },
+            rock: {
+                genre: "Rock",
+                style: "energetic, powerful",
+                voice: "Male Raspy",
+                tone: "Aggressive",
+                mood: "intense, rebellious",
+                theme: "freedom, rebellion, power"
+            },
+            ballad: {
+                genre: "Rock",
+                style: "emotional, acoustic",
+                voice: "Female Soulful",
+                tone: "Melancholic",
+                mood: "emotional, intimate",
+                theme: "loss, heartbreak, reflection"
+            }
+        };
+
+        function loadPreset(presetName) {
+            const preset = PRESETS[presetName];
+            if (preset) {
+                document.getElementById('genre').value = preset.genre;
+                document.getElementById('style').value = preset.style;
+                document.getElementById('voice').value = preset.voice;
+                document.getElementById('tone').value = preset.tone;
+                document.getElementById('mood').value = preset.mood;
+                document.getElementById('theme').value = preset.theme;
+            }
+        }
+
+        async function generateSong() {
+            const title = document.getElementById('songTitle').value || '';
+            const genre = document.getElementById('genre').value;
+            const style = document.getElementById('style').value;
+            const voice = document.getElementById('voice').value;
+            const tone = document.getElementById('tone').value;
+            const mood = document.getElementById('mood').value;
+            const theme = document.getElementById('theme').value;
+            const language = document.getElementById('language').value;
+            const bpm = document.getElementById('bpm').value;
+            const customLyrics = document.getElementById('lyrics').value;
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loadingState = document.getElementById('loadingState');
+            const resultSection = document.getElementById('resultSection');
+            const noResult = document.getElementById('noResult');
+
+            generateBtn.disabled = true;
+            generateBtn.classList.add('loading');
+            generateBtn.innerHTML = '<span class="loading-spinner"></span>Generating...';
+            loadingState.style.display = 'block';
+            resultSection.classList.remove('active');
+
+            try {
+                const prompt = customLyrics
+                    ? `Generate a song with these lyrics:\n\n${customLyrics}\n\nGenre: ${genre}, Style: ${style}, Voice: ${voice}, Tone: ${tone}, Mood: ${mood}, Language: ${language}, BPM: ${bpm}`
+                    : `Create a ${genre} song with the following specifications:
+                    - Style: ${style}
+                    - Voice: ${voice}
+                    - Tone: ${tone}
+                    - Mood: ${mood}
+                    - Theme/Lyrics: ${theme}
+                    - Language: ${language}
+                    - BPM: ${bpm}
+                    ${title ? `- Title hint: ${title}` : ''}
+                    
+                    Structure: Verse 1, Chorus, Verse 2, Chorus, Bridge, Chorus
+                    
+                    Make it professional, catchy, and emotionally resonant.`;
+
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer sk-proj-YOUR_API_KEY_HERE'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `You are a world-class songwriter and music producer. Create songs that are creative, emotional, and match the requested genre, style, and tone perfectly. Return ONLY valid JSON with no additional text. Format:
+{
+    "title": "Song Title",
+    "artist": "AI Generated",
+    "hook": "Catchy hook line",
+    "lyrics": {
+        "verse_1": "Verse 1 lyrics...",
+        "chorus": "Chorus lyrics...",
+        "verse_2": "Verse 2 lyrics...",
+        "bridge": "Bridge lyrics...",
+        "chorus_2": "Chorus lyrics...",
+        "outro": "Outro lyrics..."
+    },
+    "chords": ["Am", "F", "C", "G"],
+    "bpm": ${bpm},
+    "genre": "${genre}",
+    "style": "${style}",
+    "voice": "${voice}",
+    "tone": "${tone}",
+    "mood": "${mood}",
+    "language": "${language}",
+    "key": "Am",
+    "time_signature": "4/4"
+}`
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (response.status === 401) {
+                    // Demo mode - generate local example
+                    const song = generateDemoSong(genre, style, voice, tone, mood, theme, language, bpm, title);
+                    displaySong(song);
+                } else if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                } else {
+                    const data = await response.json();
+                    const songText = data.choices[0].message.content;
+                    const song = JSON.parse(songText);
+                    displaySong(song);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Fallback to demo mode
+                if (error.message.includes('401')) {
+                    displayError('OpenAI API key not configured. Running in demo mode. Add your API key to the script.');
+                    const song = generateDemoSong(genre, style, voice, tone, mood, theme, language, bpm, title);
+                    displaySong(song);
+                } else {
+                    displayError('Error generating song: ' + error.message + '. Running demo song...');
+                    const song = generateDemoSong(genre, style, voice, tone, mood, theme, language, bpm, title);
+                    displaySong(song);
+                }
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('loading');
+                generateBtn.innerHTML = '🎵 Generate Song';
+                loadingState.style.display = 'none';
+            }
+        }
+
+        function generateDemoSong(genre, style, voice, tone, mood, theme, language, bpm, title) {
+            const templates = {
+                'Pop': {
+                    verse_1: `You came into my life like a summer breeze\nTurning all my worries into certainties\nEvery moment with you feels so right\nLike a melody dancing through the night`,
+                    chorus: `We're alive, we're alive, burning bright\nIn this moment, forever feels so light\nYou and me, we're a symphony\nA perfect harmony for eternity`,
+                    verse_2: `They say love's a game, but we're playing for keeps\nIn your eyes I see promises running deep\nTime stands still when you hold me close\nYou're the one that I want the most`,
+                    bridge: `And when the world falls down\nYou're still around\nNothing can take this from us now`,
+                    hook: "We're alive, we're alive tonight"
+                },
+                'Hip Hop': {
+                    verse_1: `Yeah, started from the bottom, now we climbin' high\nGrinded through the struggle, watchin' eagles fly\nBeef with my competition, yeah I'm takin' flight\nSpittin' fire on the beat, yeah I do it right`,
+                    chorus: `We're gonna make it big, yeah, unstoppable\nMoney and the fame, yeah, impossible\nRise up to the top, never gonna drop\nKeep it real or quit, yeah, don't you stop`,
+                    verse_2: `Countin' all my blessings, grateful for the grind\nLeft my haters in the rearview, that's behind\nNow I'm livin' out my dreams, watch 'em manifest\nPuttin' in the work, yeah, I'm better than the rest`,
+                    bridge: `Unstoppable, unstoppable\nMy vision's crystal clear`,
+                    hook: "We're gonna make it big, unstoppable"
+                },
+                'Country': {
+                    verse_1: `There's a dusty road down to my hometown\nWhere the stars shine bright and the sun comes down\nI remember you standing by the old barn door\nSaid you'd love me forever and I wanted more`,
+                    chorus: `Take me back to that Tennessee night\nWhere everything felt wrong and everything felt right\nYour hand in mine under the pale moonlight\nBaby, let's go back to that Tennessee night`,
+                    verse_2: `The radio played our favorite song\nAnd I knew right then that you were my belonging\nSeasons changed but my love stayed true\nEvery single day I'm comin' home to you`,
+                    bridge: `These country roads lead back to you\nThrough rain and storms, forever true`,
+                    hook: "Take me back to that Tennessee night"
+                },
+                'R&B': {
+                    verse_1: `Mmm, your love got me feelin' so alive\nEvery touch, every kiss, you satisfy\nIn the darkness of the night, you're my light\nTake me higher, higher to the sky so bright`,
+                    chorus: `Smooth and slow, let it flow, that's the way\nYour love got me locked in, here to stay\nFeelin' your vibe, synchronize\nIn your arms, paradise`,
+                    verse_2: `Silk and satin, that's the way you move\nEverything about you got me in the groove\nLet me love you gently through the night\nYou're my rhythm, you're my light`,
+                    bridge: `Stay with me, don't let go\nLove me slow`,
+                    hook: "Smooth and slow, that's the way"
+                }
+            };
+
+            const template = templates[genre] || templates['Pop'];
+
+            return {
+                title: title || `${genre} Masterpiece`,
+                artist: "AI Song Agent",
+                hook: template.hook,
+                lyrics: {
+                    verse_1: template.verse_1,
+                    chorus: template.chorus,
+                    verse_2: template.verse_2,
+                    bridge: template.bridge,
+                    chorus_2: template.chorus,
+                    outro: "Yeah, yeah... (fade out)"
+                },
+                chords: ["Am", "F", "C", "G"],
+                bpm: parseInt(bpm),
+                genre: genre,
+                style: style,
+                voice: voice,
+                tone: tone,
+                mood: mood,
+                language: language,
+                key: "Am",
+                time_signature: "4/4"
+            };
+        }
+
+        function displaySong(song) {
+            const resultDiv = document.getElementById('songResult');
+            const resultSection = document.getElementById('resultSection');
+            const noResult = document.getElementById('noResult');
+
+            let html = `
+                <div class="song-title">${song.title}</div>
+                
+                <div class="metadata">
+                    <div class="metadata-item">
+                        <div class="metadata-label">Genre</div>
+                        <div class="metadata-value">${song.genre}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">BPM</div>
+                        <div class="metadata-value">${song.bpm}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Voice</div>
+                        <div class="metadata-value">${song.voice}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Tone</div>
+                        <div class="metadata-value">${song.tone}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Key</div>
+                        <div class="metadata-value">${song.key}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Language</div>
+                        <div class="metadata-value">${song.language}</div>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <strong>Chords:</strong>
+                    <div class="chords-display">
+                        ${song.chords.map(c => `<div class="chord">${c}</div>`).join('')}
+                    </div>
+                </div>
+
+                <div class="lyrics-section">
+                    ${song.lyrics.verse_1 ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">🎵 Verse 1</div>
+                        <div class="lyrics-part-content">${song.lyrics.verse_1}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${song.lyrics.chorus ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">🎤 Chorus</div>
+                        <div class="lyrics-part-content">${song.lyrics.chorus}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${song.lyrics.verse_2 ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">🎵 Verse 2</div>
+                        <div class="lyrics-part-content">${song.lyrics.verse_2}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${song.lyrics.bridge ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">🌉 Bridge</div>
+                        <div class="lyrics-part-content">${song.lyrics.bridge}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${song.lyrics.chorus_2 ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">🎤 Chorus</div>
+                        <div class="lyrics-part-content">${song.lyrics.chorus_2}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${song.lyrics.outro ? `
+                    <div class="lyrics-part">
+                        <div class="lyrics-part-title">👋 Outro</div>
+                        <div class="lyrics-part-content">${song.lyrics.outro}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            resultDiv.innerHTML = html;
+            window.lastSong = song;
+            resultSection.classList.add('active');
+            noResult.style.display = 'none';
+        }
+
+        function displayError(message) {
+            const resultDiv = document.getElementById('songResult');
+            resultDiv.innerHTML = `<div class="info-box" style="background: #fff3cd; border-color: #ff9800; color: #f57f17;">⚠️ ${message}</div>`;
+        }
+
+        function copySongText() {
+            if (!window.lastSong) return;
+            const song = window.lastSong;
+            const text = `${song.title}
+${song.artist}
+
+Genre: ${song.genre} | BPM: ${song.bpm} | Voice: ${song.voice}
+Tone: ${song.tone} | Mood: ${song.mood} | Language: ${song.language}
+
+VERSE 1:
+${song.lyrics.verse_1}
+
+CHORUS:
+${song.lyrics.chorus}
+
+VERSE 2:
+${song.lyrics.verse_2}
+
+BRIDGE:
+${song.lyrics.bridge}
+
+CHORUS:
+${song.lyrics.chorus_2}
+
+OUTRO:
+${song.lyrics.outro}
+
+Chords: ${song.chords.join(' - ')}
+Key: ${song.key} | Time Signature: ${song.time_signature}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Song lyrics copied to clipboard!');
+            });
+        }
+
+        function downloadSongJSON() {
+            if (!window.lastSong) return;
+            const dataStr = JSON.stringify(window.lastSong, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${window.lastSong.title.replace(/\s+/g, '_')}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearForm() {
+            document.getElementById('songTitle').value = '';
+            document.getElementById('genre').value = 'Pop';
+            document.getElementById('style').value = '';
+            document.getElementById('voice').value = 'Female Pop';
+            document.getElementById('tone').value = 'Uplifting';
+            document.getElementById('mood').value = '';
+            document.getElementById('theme').value = '';
+            document.getElementById('language').value = 'English';
+            document.getElementById('bpm').value = '96';
+            document.getElementById('lyrics').value = '';
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('noResult').style.display = 'block';
+        }
+
+        // Initialize with some default values
+        document.getElementById('mood').value = 'energetic, happy';
+        document.getElementById('theme').value = 'love, confidence, celebration';
+    </script>
+</body>
+</html>
